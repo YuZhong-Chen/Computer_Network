@@ -14,10 +14,14 @@
 #define REQUEST_SIZE 1000
 #define RESPONSE_SIZE 1000
 
-#define PORT_NUM "80"
+typedef struct {
+    char DomainName[100];
+    char Path[150];
+} UniformResourceLocator;
+extern UniformResourceLocator URL;
 
 void SocketHandlerInit();
 void SocketHandlerEnd();
-void URL_Parser(int argc, char **argv);
+void URL_Parser(char *url);
 
 #endif

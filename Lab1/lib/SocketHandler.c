@@ -1,7 +1,8 @@
 #include "SocketHandler.h"
 
-char *Hostname;
-char *Target;
+const char *PORT_NUM = "80";
+
+UniformResourceLocator URL;
 
 char Request[REQUEST_SIZE];
 char Response[REQUEST_SIZE];
@@ -10,26 +11,26 @@ void SocketHandlerInit() {
 }
 
 void SocketHandlerEnd() {
-    free(Hostname);
-    free(Target);
 }
 
-void URL_Parser(int argc, char **argv) {
-    char Buffer[100];
+void URL_Parser(char *url) {
+    size_t i, j;
+    size_t urlLength = strlen(url);
 
-    if (argc == 1) {
-        printf("Wrong Input : There must have one input.");
-        assert(false);
-    } else if (argc > 2) {
-        printf("Wrong Input : There must have only one input.");
-        assert(false);
+    // Get Domain Name.
+    for (i = 0; i < urlLength; i++) {
+        if (url[i] == '/') {
+            break;
+        }
+        URL.DomainName[i] = url[i];
     }
+    URL.DomainName[i] = '\0';
 
-    size_t i = 0;
-    for (i = 0; i < strlen(argv[1]); i++) {
-        Buffer[i] = argv[1][i];
+    // Get the Path.
+    for (j = 0; i < urlLength; i++, j++) {
+        URL.Path[j] = url[i];
     }
-    printf("%s\n\n\n", Buffer);
+    URL.Path[j] = '\0';
 }
 
 void Hostname_to_IP_Address() {
@@ -40,12 +41,12 @@ int temp() {
     char *Header = "Host: %s\r\n";
     char *CRLF = "\r\n";
 
-    int BufferLen = strlen(Header) + strlen(Hostname) + 1;
+    int BufferLen = strlen(Header) + strlen(URL.DomainName) + 1;
     char *Buffer = (char *)malloc(BufferLen);
 
     strcpy(Request, RequestLine);
 
-    sprintf(Buffer, Header, Hostname);
+    sprintf(Buffer, Header, URL.DomainName);
     strcat(Request, Buffer);
     strcat(Request, CRLF);
 
@@ -62,7 +63,7 @@ int temp() {
     hints.ai_socktype = SOCK_STREAM;  // 串流 Socket
     hints.ai_flags = AI_NUMERICSERV;  // 將 getaddrinfo() 第 2 參數 (PORT_NUM) 視為數字
 
-    if (getaddrinfo(Hostname, PORT_NUM, &hints, &result) != 0) {
+    if (getaddrinfo(URL.DomainName, PORT_NUM, &hints, &result) != 0) {
         perror("Test");
         return EXIT_FAILURE;
     }

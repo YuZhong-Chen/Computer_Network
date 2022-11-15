@@ -1,14 +1,34 @@
 #include "HtmlParser.h"
 #include "SocketHandler.h"
 
+void Init();
+void Ending();
+
 int main(int argc, char **argv) {
-    SocketHandlerInit();
-    HtmlParserInit();
+    Init();
 
-    URL_Parser(argc, argv);
+    if (argc <= 1) {
+        printf("Wrong Input : There must have one input.");
+        assert(false);
+    } else if (argc > 2) {
+        printf("Wrong Input : There must have only one input.");
+        assert(false);
+    }
 
-    SocketHandlerEnd();
-    HtmlParserEnd();
+    URL_Parser(argv[1]);
+    printf("Input URL: %s%s\n", URL.DomainName, URL.Path);
+
+    printf("Setting socket to %s\n", URL.DomainName);
 
     return EXIT_SUCCESS;
+}
+
+void Init() {
+    SocketHandlerInit();
+    HtmlParserInit();
+}
+
+void Ending() {
+    SocketHandlerEnd();
+    HtmlParserEnd();
 }
