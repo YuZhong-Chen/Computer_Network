@@ -36,6 +36,8 @@ int main(int argc, char **argv) {
     ReceiveResponse();
     printf("Received.\n");
 
+    printf("%s\n", Response);
+
     Ending();
     return EXIT_SUCCESS;
 }

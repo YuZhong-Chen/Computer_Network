@@ -7,13 +7,15 @@ ADDRESS_INFO AddressInfo;
 static int Socket;
 
 char Request[REQUEST_SIZE];
-char Response[REQUEST_SIZE];
+char Response[RESPONSE_SIZE];
+int ResponseLength;
 
 void SocketHandlerInit() {
     strcpy(URL.PortNum, "80");
     memset(&(AddressInfo.hints), 0, sizeof(struct addrinfo));
     AddressInfo.res = NULL;
     Socket = -1;
+    ResponseLength = 0;
 }
 
 void SocketHandlerEnd() {
@@ -96,9 +98,10 @@ void SendRequest() {
 }
 
 void ReceiveResponse() {
-    int ResponseLength = 0;
-    while (1) {
-        int num = read(Socket, Response, RESPONSE_SIZE);
+    char Buffer[1000];
+
+    while (true) {
+        int num = read(Socket, Buffer, 500);
         if (num == 0) {
             break;
         } else if (num == -1) {
@@ -107,9 +110,7 @@ void ReceiveResponse() {
 
         int i = 0;
         for (i = 0; i < num; i++) {
-            printf("%c", Response[i]);
+            Response[ResponseLength++] = Buffer[i];
         }
-        ResponseLength += num;
     }
-    printf("\nLen : %d\n", ResponseLength);
 }

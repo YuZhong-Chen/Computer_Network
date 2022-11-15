@@ -13,7 +13,7 @@
 #include <unistd.h>
 
 #define REQUEST_SIZE 1000
-#define RESPONSE_SIZE 1000
+#define RESPONSE_SIZE 100000
 
 typedef struct {
     char DomainName[100];
@@ -38,5 +38,9 @@ void SettingSocket();
 void ConstructRequest();
 void SendRequest();
 void ReceiveResponse();
+
+extern char Request[REQUEST_SIZE];
+extern char Response[RESPONSE_SIZE];
+extern int ResponseLength;
 
 #endif
