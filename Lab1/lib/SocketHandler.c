@@ -1,16 +1,20 @@
 #include "SocketHandler.h"
 
-const char *PORT_NUM = "80";
-
 UniformResourceLocator URL;
+ADDRESS_INFO AddressInfo;
 
 char Request[REQUEST_SIZE];
 char Response[REQUEST_SIZE];
 
 void SocketHandlerInit() {
+    strcpy(URL.PortNum, "80");
+    memset(&(AddressInfo.hints), 0, sizeof(struct addrinfo));
+    AddressInfo.res = NULL;
 }
 
 void SocketHandlerEnd() {
+    free(AddressInfo.res);
+    AddressInfo.res = NULL;
 }
 
 void URL_Parser(char *url) {
@@ -33,7 +37,15 @@ void URL_Parser(char *url) {
     URL.Path[j] = '\0';
 }
 
-void Hostname_to_IP_Address() {
+void GetAddressInfo() {
+    AddressInfo.hints.ai_family = AF_UNSPEC;
+    AddressInfo.hints.ai_socktype = SOCK_STREAM;
+    AddressInfo.hints.ai_flags = AI_NUMERICSERV;
+
+    if (getaddrinfo(URL.DomainName, URL.PortNum, &(AddressInfo.hints), &(AddressInfo.res))) {
+        perror("getaddrinfo ");
+        assert(false);
+    }
 }
 
 int temp() {
@@ -50,37 +62,16 @@ int temp() {
     strcat(Request, Buffer);
     strcat(Request, CRLF);
 
-    // -------------------------------------------
-    // hints 參數，設定 getaddrinfo() 的回傳方式
-    struct addrinfo hints;
-
-    // getaddrinfo() 執行結果的 addrinfo 結構指標
-    struct addrinfo *result;
-
-    // 以 memset 清空 hints 結構
-    memset(&hints, 0, sizeof(struct addrinfo));
-    hints.ai_family = AF_UNSPEC;      // 使用 IPv4 or IPv6
-    hints.ai_socktype = SOCK_STREAM;  // 串流 Socket
-    hints.ai_flags = AI_NUMERICSERV;  // 將 getaddrinfo() 第 2 參數 (PORT_NUM) 視為數字
-
-    if (getaddrinfo(URL.DomainName, PORT_NUM, &hints, &result) != 0) {
-        perror("Test");
-        return EXIT_FAILURE;
-    }
-
     int sock = 0;
-    if ((sock = socket(result->ai_family, result->ai_socktype, 0)) < 0) {
+    if ((sock = socket(AddressInfo.res->ai_family, AddressInfo.res->ai_socktype, 0)) < 0) {
         printf("\n Socket creation error \n");
         return -1;
     }
 
-    if (connect(sock, result->ai_addr, result->ai_addrlen) < 0) {
+    if (connect(sock, AddressInfo.res->ai_addr, AddressInfo.res->ai_addrlen) < 0) {
         printf("\nConnection Failed \n");
         return -1;
     }
-
-    free(result);
-    result = NULL;
 
     if (send(sock, Request, strlen(Request), 0) == -1) {
         perror("Send error");

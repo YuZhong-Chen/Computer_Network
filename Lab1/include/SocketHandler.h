@@ -17,11 +17,20 @@
 typedef struct {
     char DomainName[100];
     char Path[150];
+    char PortNum[5];
 } UniformResourceLocator;
 extern UniformResourceLocator URL;
 
+typedef struct {
+    struct addrinfo hints;
+    struct addrinfo *res;
+} ADDRESS_INFO;
+extern ADDRESS_INFO AddressInfo;
+
 void SocketHandlerInit();
 void SocketHandlerEnd();
+
 void URL_Parser(char *url);
+void GetAddressInfo();
 
 #endif

@@ -16,10 +16,15 @@ int main(int argc, char **argv) {
     }
 
     URL_Parser(argv[1]);
-    printf("Input URL: %s%s\n", URL.DomainName, URL.Path);
+    printf("Input URL : %s%s\n", URL.DomainName, URL.Path);
+
+    printf("Getting the address info ...\n");
+    GetAddressInfo();
+    printf("Finish.\n");
 
     printf("Setting socket to %s\n", URL.DomainName);
 
+    Ending();
     return EXIT_SUCCESS;
 }
 
