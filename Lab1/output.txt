@@ -1,7 +1,18 @@
-Message sent
+Input URL: can.cs.nthu.edu.tw/index.php
+Getting the address info ...
+Gotten.
+Creating socket and connect to can.cs.nthu.edu.tw
+Connected.
+GET /index.php HTTP/1.1
+Host: can.cs.nthu.edu.tw
 
+
+Sending request ...
+Sent.
+Receiving response ...
+Received.
 HTTP/1.1 200 OK
-Date: Mon, 14 Nov 2022 16:11:05 GMT
+Date: Tue, 15 Nov 2022 22:45:45 GMT
 Server: Apache/2.4.41 (Ubuntu)
 Vary: Accept-Encoding
 Content-Length: 4380

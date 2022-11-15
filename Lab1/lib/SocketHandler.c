@@ -3,6 +3,9 @@
 UniformResourceLocator URL;
 ADDRESS_INFO AddressInfo;
 
+// File descriptor of Socket.
+static int Socket;
+
 char Request[REQUEST_SIZE];
 char Response[REQUEST_SIZE];
 
@@ -10,6 +13,7 @@ void SocketHandlerInit() {
     strcpy(URL.PortNum, "80");
     memset(&(AddressInfo.hints), 0, sizeof(struct addrinfo));
     AddressInfo.res = NULL;
+    Socket = -1;
 }
 
 void SocketHandlerEnd() {
@@ -43,45 +47,58 @@ void GetAddressInfo() {
     AddressInfo.hints.ai_flags = AI_NUMERICSERV;
 
     if (getaddrinfo(URL.DomainName, URL.PortNum, &(AddressInfo.hints), &(AddressInfo.res))) {
-        perror("getaddrinfo ");
+        perror("Fail to get address info");
         assert(false);
     }
 }
 
-int temp() {
-    char *RequestLine = "GET /index.php HTTP/1.1\r\n";
-    char *Header = "Host: %s\r\n";
+void SettingSocket() {
+    Socket = socket(AddressInfo.res->ai_family, AddressInfo.res->ai_socktype, 0);
+    if (Socket == -1) {
+        perror("Fail to create socket");
+        assert(false);
+    }
+
+    if (connect(Socket, AddressInfo.res->ai_addr, AddressInfo.res->ai_addrlen)) {
+        perror("Connection Failed");
+        assert(false);
+    }
+}
+
+void ConstructRequest() {
+    char *GetRequest = "GET %s HTTP/1.1";
+    char *Host = "Host: %s";
     char *CRLF = "\r\n";
 
-    int BufferLen = strlen(Header) + strlen(URL.DomainName) + 1;
-    char *Buffer = (char *)malloc(BufferLen);
+    char Buffer[200];
+    memset(Buffer, 0, strlen(Buffer));
 
-    strcpy(Request, RequestLine);
+    // Assemble Get and Path.
+    sprintf(Buffer, GetRequest, URL.Path);
+    strcpy(Request, Buffer);
+    strcat(Request, CRLF);
+    memset(Buffer, 0, strlen(Buffer));
 
-    sprintf(Buffer, Header, URL.DomainName);
+    // Assemble Host and Domain name.
+    sprintf(Buffer, Host, URL.DomainName);
     strcat(Request, Buffer);
     strcat(Request, CRLF);
 
-    int sock = 0;
-    if ((sock = socket(AddressInfo.res->ai_family, AddressInfo.res->ai_socktype, 0)) < 0) {
-        printf("\n Socket creation error \n");
-        return -1;
-    }
+    // End of Request.
+    strcat(Request, CRLF);
+}
 
-    if (connect(sock, AddressInfo.res->ai_addr, AddressInfo.res->ai_addrlen) < 0) {
-        printf("\nConnection Failed \n");
-        return -1;
-    }
-
-    if (send(sock, Request, strlen(Request), 0) == -1) {
+void SendRequest() {
+    if (send(Socket, Request, strlen(Request), 0) == -1) {
         perror("Send error");
-        return EXIT_FAILURE;
+        assert(false);
     }
-    printf("Message sent\n\n");
+}
 
+void ReceiveResponse() {
     int ResponseLength = 0;
     while (1) {
-        int num = read(sock, Response, RESPONSE_SIZE);
+        int num = read(Socket, Response, RESPONSE_SIZE);
         if (num == 0) {
             break;
         } else if (num == -1) {
@@ -95,9 +112,4 @@ int temp() {
         ResponseLength += num;
     }
     printf("\nLen : %d\n", ResponseLength);
-
-    free(Buffer);
-    Buffer = NULL;
-
-    return 0;
 }

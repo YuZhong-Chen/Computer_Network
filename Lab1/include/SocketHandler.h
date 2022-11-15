@@ -3,6 +3,7 @@
 
 #include <arpa/inet.h>
 #include <assert.h>
+#include <math.h>
 #include <netdb.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -32,5 +33,10 @@ void SocketHandlerEnd();
 
 void URL_Parser(char *url);
 void GetAddressInfo();
+void SettingSocket();
+
+void ConstructRequest();
+void SendRequest();
+void ReceiveResponse();
 
 #endif
