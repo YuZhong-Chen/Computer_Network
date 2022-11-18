@@ -1,4 +1,4 @@
-#include "HtmlParser.h"
+#include "ResponseParser.h"
 #include "SocketHandler.h"
 
 void Init();
@@ -35,8 +35,18 @@ int main(int argc, char **argv) {
     printf("Receiving response ...\n");
     ReceiveResponse();
     printf("Received.\n");
+    // printf("%s Len : %d\n", Response, ResponseLength);
 
-    printf("%s\n", Response);
+    printf("Start parsing Header ...\n");
+    ParseHeader();
+    printf("Finish.\n");
+    // printf("HTTP/%.1lf \nStatus Code : %d\n", HTTP_Protocol, StatusCode);
+    if (StatusCode != 200) {
+        printf("Error : Status Code : %d. Can't get HTML files.\n", StatusCode);
+        assert(false);
+    }
+
+    // printf("Start parse HTML file ...\n");
 
     Ending();
     return EXIT_SUCCESS;

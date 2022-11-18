@@ -1,18 +1,5 @@
-Input URL: can.cs.nthu.edu.tw/index.php
-Getting the address info ...
-Gotten.
-Creating socket and connect to can.cs.nthu.edu.tw
-Connected.
-GET /index.php HTTP/1.1
-Host: can.cs.nthu.edu.tw
-
-
-Sending request ...
-Sent.
-Receiving response ...
-Received.
 HTTP/1.1 200 OK
-Date: Tue, 15 Nov 2022 22:45:45 GMT
+Date: Thu, 17 Nov 2022 23:21:32 GMT
 Server: Apache/2.4.41 (Ubuntu)
 Vary: Accept-Encoding
 Content-Length: 4380
@@ -127,5 +114,4 @@ Content-Type: text/html; charset=UTF-8
     <!-- end of footer -->
 </body>
 </html>
-
-Len : 4553
+ Len : 4553
