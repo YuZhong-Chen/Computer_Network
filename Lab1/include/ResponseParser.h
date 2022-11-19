@@ -13,10 +13,12 @@ void HtmlParserInit();
 void HtmlParserEnd();
 
 void ParseHeader();
+void ParseHTML();
 
 extern float HTTP_Protocol;
 extern int StatusCode;
-extern char *HREF[1000];
+extern char HREF[1000][200];
+extern int Total_HREF;
 
 extern int temp;
 
