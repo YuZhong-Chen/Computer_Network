@@ -37,16 +37,20 @@ void URL_Parser(char *url) {
     URL.DomainName[i] = '\0';
 
     // Get the Path.
-    for (j = 0; i < urlLength; i++, j++) {
-        URL.Path[j] = url[i];
+    if (strlen(URL.DomainName) == urlLength) {
+        URL.Path[0] = '/';
+        URL.Path[1] = '\0';
+    } else {
+        for (j = 0; i < urlLength; i++, j++) {
+            URL.Path[j] = url[i];
+        }
+        URL.Path[j] = '\0';
     }
-    URL.Path[j] = '\0';
 }
 
 void GetAddressInfo() {
-    AddressInfo.hints.ai_family = AF_UNSPEC;
+    AddressInfo.hints.ai_family = AF_INET;
     AddressInfo.hints.ai_socktype = SOCK_STREAM;
-    AddressInfo.hints.ai_flags = AI_NUMERICSERV;
 
     if (getaddrinfo(URL.DomainName, URL.PortNum, &(AddressInfo.hints), &(AddressInfo.res))) {
         perror("Fail to get address info");
@@ -99,9 +103,10 @@ void SendRequest() {
 
 void ReceiveResponse() {
     char Buffer[1000];
+    memset(Buffer, 0, 1000);
 
     while (true) {
-        int num = read(Socket, Buffer, 500);
+        int num = read(Socket, Buffer, 999);
         if (num == 0) {
             break;
         } else if (num == -1) {

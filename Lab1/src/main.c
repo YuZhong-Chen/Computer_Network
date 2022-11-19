@@ -37,15 +37,14 @@ int main(int argc, char **argv) {
     printf("Receiving response ...\n");
     ReceiveResponse();
     // printf("Received.\n");
-    // printf("%s Len : %d\n", Response, ResponseLength);
 
     // printf("Start parsing Header ...\n");
     ParseHeader();
     // printf("Finish.\n");
-    // printf("HTTP/%.1lf \nStatus Code : %d\n", HTTP_Protocol, StatusCode);
+
     if (StatusCode != 200) {
-        printf("Error : Status Code : %d. Can't get HTML files.\n", StatusCode);
-        assert(false);
+        printf("Error : Status Code is %d, not 200.\n", StatusCode);
+        // assert(false);
     }
 
     // printf("Start parsing HTML file ...\n");
