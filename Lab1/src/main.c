@@ -5,8 +5,6 @@ void Init();
 void Ending();
 
 int main(int argc, char **argv) {
-    int i;
-
     Init();
 
     if (argc <= 1) {
@@ -20,37 +18,28 @@ int main(int argc, char **argv) {
     URL_Parser(argv[1]);
     printf("Enter URL: %s%s\n", URL.DomainName, URL.Path);
 
-    // printf("Getting the address info ...\n");
     GetAddressInfo();
-    // printf("Gotten.\n");
 
-    // printf("Creating socket and connect to %s\n", URL.DomainName);
     SettingSocket();
-    // printf("Connected.\n");
 
     ConstructRequest();
 
     printf("Sending request ...\n");
     SendRequest();
-    // printf("Sent.\n");
 
     printf("Receiving response ...\n");
     ReceiveResponse();
-    // printf("Received.\n");
 
-    // printf("Start parsing Header ...\n");
     ParseHeader();
-    // printf("Finish.\n");
 
     if (StatusCode != 200) {
-        printf("Error : Status Code is %d, not 200.\n", StatusCode);
+        printf("Warning : Status Code is %d, not 200.\n", StatusCode);
         // assert(false);
     }
 
-    // printf("Start parsing HTML file ...\n");
     ParseHTML();
-    // printf("Finish\n");
 
+    int i;
     printf("================= Hyperlinks =================\n");
     for (i = 0; i < Total_HREF; i++) {
         printf("%s\n", HREF[i]);
