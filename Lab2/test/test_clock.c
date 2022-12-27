@@ -28,9 +28,11 @@ int main() {
     int f;
 
     t = (clock() * 1000) / CLOCKS_PER_SEC;
+
     printf("Calculating...\n");
     f = frequency_of_primes(999999);
     printf("The number of primes lower than 100,000 is: %d\n", f);
+
     t = (clock() * 1000) / CLOCKS_PER_SEC - t;
     printf("It took me %ld milliseconds.\n", t);
 

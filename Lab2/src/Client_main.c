@@ -1,115 +1,10 @@
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <time.h>
-#include <unistd.h>
+#include "Client.h"
 
-/*****************notice**********************
- *
- * You can follow the comment inside the code.
- * This kind of comment is for basic part.
- * ===============
- * Some hints...
- * ===============
- *
- * This kind of comment is for bonus part.
- * ---------------
- * Some hints...
- * ---------------
- *
- *
- *
- *********************************************/
-
-//==============
-// Packet header
-//==============
-typedef struct header {
-    unsigned int seq_num;
-    unsigned int ack_num;
-    unsigned char is_last;
-} Header;
-
-//==================
-// Udp packet & data
-//==================
-typedef struct udp_pkt {
-    Header header;
-    char data[1024];
-} Udp_pkt;
-
-//============
-// Declaration
-//============
 int sockfd = 0;
-Udp_pkt snd_pkt, rcv_pkt;
+UDP_pkt snd_pkt, rcv_pkt;
 struct sockaddr_in info, client_info;
 socklen_t len;
 time_t t1, t2;
-
-//=====================
-// Simulate packet loss
-//=====================
-int isLoss(double prob) {
-    double thres = prob * RAND_MAX;
-
-    if (prob >= 1)
-        return 1;              // loss
-    return (rand() <= thres);  // not loss
-}
-
-//==================================
-// You should complete this function
-//==================================
-int recvFile(FILE *fd) {
-    printf("FILE_EXISTS\n");
-
-    char *str;
-    char fileName[30];
-
-    //==================================================================
-    // Split the command into "download" & "filename", just get filename
-    //==================================================================
-    str = strtok(snd_pkt.data, " \n");
-    str = strtok(NULL, " \n");
-
-    sprintf(fileName, "download_");
-    strcat(fileName, str);
-
-    // FILE *fd;
-    fd = fopen(fileName, "wb");
-
-    printf("Receiving...\n");
-    char buffer[123431];
-    int index = 0;
-    int receive_packet = 0;
-    memset(snd_pkt.data, '\0', sizeof(snd_pkt.data));
-    while (1) {
-        //=======================
-        // Simulation packet loss
-        //=======================
-        if (isLoss(0.5)) {
-            printf("\tOops! Packet loss!\n");
-            break;
-        }
-        //==============================================
-        // Actually receive packet and write into buffer
-        //==============================================
-
-        //==============================================
-        // Write buffer into file if is_last flag is set
-        //==============================================
-
-        //====================
-        // Reply ack to server
-        //====================
-    }
-    return 0;
-}
 
 int main(int argc, char *argv[]) {
     //==============
@@ -164,7 +59,7 @@ int main(int argc, char *argv[]) {
         } else if (strncmp(snd_pkt.data, "download", 8) == 0) {
             snd_pkt.header.seq_num = 0;
             snd_pkt.header.ack_num = 0;
-            snd_pkt.header.is_last = 1;
+            snd_pkt.header.isLast = 1;
             // We first set is_last to 1 so that server know its our first message.
 
             int numbytes;
@@ -200,7 +95,7 @@ int main(int argc, char *argv[]) {
             //==========================
             else if (strcmp(rcv_pkt.data, "FILE_EXISTS") == 0) {
                 t1 = time(NULL);
-                recvFile(fd);
+                recvFile(fd, snd_pkt);
                 t2 = time(NULL);
                 printf("Total cost %ld secs\n", t2 - t1);
             }
