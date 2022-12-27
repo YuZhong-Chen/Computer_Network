@@ -16,7 +16,7 @@
 
 #include "UDP_pkt.h"
 
-#define DATABASE_PATH "./data/"
+#define SERVER_DATABASE_PATH "./data/"
 #define TIMEOUT 100
 
 bool CreateSocket(int PORT);

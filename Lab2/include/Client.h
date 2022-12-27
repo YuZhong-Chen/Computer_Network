@@ -14,6 +14,17 @@
 
 #include "UDP_pkt.h"
 
-bool recvFile(FILE *fd, UDP_pkt snd_pkt);
+#define LOSS_RATE 0.9
+#define CLIENT_DATABASE_PATH "./output/"
+
+bool CreateSocket();
+
+void InitSendPkt();
+
+void SetupServerInfo();
+
+bool CheckFileStatus(char *FileName);
+
+bool recvFile(char *FileName);
 
 #endif

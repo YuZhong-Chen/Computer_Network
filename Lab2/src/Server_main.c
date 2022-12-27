@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
         if (!strcmp(Command, "download")) {
             char *FileName = strtok(NULL, " \n");
             char FilePath[100];
-            strcat(FilePath, DATABASE_PATH);
+            sprintf(FilePath, SERVER_DATABASE_PATH);
             strcat(FilePath, FileName);
 
             FILE *fd = fopen(FilePath, "rb");  // Read the file in binary format.
@@ -40,8 +40,6 @@ int main(int argc, char *argv[]) {
                     return EXIT_FAILURE;
                 }
 
-                fseek(fd, 0, SEEK_END);
-
                 // Sleep 1 seconds before transmitting data to make sure the client is ready
                 sleep(1);
                 printf("transmitting...\n");
@@ -57,4 +55,6 @@ int main(int argc, char *argv[]) {
 
         printf("\n");
     }
+
+    return EXIT_SUCCESS;
 }

@@ -8,7 +8,7 @@ static UDP_pkt snd_pkt, rcv_pkt;
 // static pthread_t th1, th2;
 // static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
-static bool isCreateThread = false;
+// static bool isCreateThread = false;
 
 bool CreateSocket(int PORT) {
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -70,48 +70,92 @@ char *ReceiveCmd() {
     return strtok(rcv_pkt.data, " ");
 }
 
-bool SendMsg(char *msg) {
-    strcpy(snd_pkt.data, msg);
+static bool SendData(char *data) {
+    strcpy(snd_pkt.data, data);
+    snd_pkt.header.isLast = (strlen(data) == 0);  // Set isLast flag for the last part of packet
 
-    int numbytes;
-    if ((numbytes = sendto(sockfd, &snd_pkt, sizeof(snd_pkt), 0, (struct sockaddr *)&client_info, len)) == -1) {
+    int SendBytes;
+    if ((SendBytes = sendto(sockfd, &snd_pkt, sizeof(snd_pkt), 0, (struct sockaddr *)&client_info, len)) == -1) {
         perror("sendto error ");
         return false;
     }
 
-    printf("server: sent %d bytes to %s\n", numbytes, inet_ntoa(client_info.sin_addr));
+    printf("server: sent %d bytes to %s\n", SendBytes, inet_ntoa(client_info.sin_addr));
     return true;
 }
 
-//==================================
-// You should complete this function
-//==================================
-// Send file function, it call receive_thread function at the first time.
-bool SendFile(FILE *fd) {
-    int filesize = ftell(fd);
-    printf("File size: %d\n", filesize);
-    //----------------------------------------------------------------
-    // Bonus part for declare timeout threads if you need bonus point,
-    // uncomment it and manage the thread by yourself
-    //----------------------------------------------------------------
-    // At the first time, we need to create thread.
-    if (!isCreateThread) {
-        isCreateThread = true;
-        // pthread_create(&th1, NULL, receive_thread, NULL);
-        // pthread_create(&th2, NULL, timeout_process, NULL);
+static int ReceiveData() {
+    int ReceiveBytes;
+    if ((ReceiveBytes = recvfrom(sockfd, &rcv_pkt, sizeof(rcv_pkt), 0, (struct sockaddr *)&info, (socklen_t *)&len)) == -1) {
+        printf("recvfrom error\n");
+        return -1;
     }
 
-    //==========================
-    // Send video data to client
-    //==========================
+    printf("server: receive %d bytes from %s\n", ReceiveBytes, inet_ntoa(info.sin_addr));
+    return ReceiveBytes;
+}
 
-    //======================================
-    // Checking timeout & Receive client ack
-    //======================================
+// Default the client always receives this packet, so don't need to wait for ack.
+bool SendMsg(char *msg) {
+    return SendData(msg);
+}
 
-    //=============================================
-    // Set is_last flag for the last part of packet
-    //=============================================
+// Send file function, it call receive_thread function at the first time.
+bool SendFile(FILE *fd) {
+    fseek(fd, 0, SEEK_END);
+    int FileSize = ftell(fd);
+    printf("File size: %d\n", FileSize);
+    rewind(fd);  // Set the position to the beginning of the file.
+
+    // // At the first time, we need to create thread.
+    // if (!isCreateThread) {
+    //     isCreateThread = true;
+    //     // pthread_create(&th1, NULL, receive_thread, NULL);
+    //     // pthread_create(&th2, NULL, timeout_process, NULL);
+    // }
+
+    char Buffer[PACKET_DATA_SIZE];
+    clock_t ExpiredTime;
+    char isEndOfFile = false;
+
+    while (true) {
+        if (isEndOfFile) {
+            memset(Buffer, '\0', sizeof(Buffer));
+            isEndOfFile++;
+        } else {
+            // Send data to client
+            if (fread(Buffer, 1, PACKET_DATA_SIZE, fd) != PACKET_DATA_SIZE) {
+                isEndOfFile = true;
+            }
+            printf("Send data : \n%s\n", Buffer);
+        }
+
+        SendData(Buffer);
+        ExpiredTime = (clock() * 1000) / CLOCKS_PER_SEC + TIMEOUT;
+
+        while (true) {
+            // Checking timeout
+            if ((clock() * 1000) / CLOCKS_PER_SEC > ExpiredTime) {
+                SendData(Buffer);
+                ExpiredTime = (clock() * 1000) / CLOCKS_PER_SEC + TIMEOUT;
+            }
+
+            // Receive client ack
+            if (ReceiveData() > 0) {
+                if (rcv_pkt.header.ack_num == snd_pkt.header.seq_num) {
+                    snd_pkt.header.seq_num++;
+                    break;
+                } else {
+                }
+            } else {
+                usleep(1);
+            }
+        }
+
+        if (isEndOfFile >= 2) {
+            break;
+        }
+    }
 
     printf("Sending file successfully.\n");
     fclose(fd);
