@@ -1,4 +1,4 @@
 127.0.0.1
 9999
-download video.mp4
+download test.txt
 exit

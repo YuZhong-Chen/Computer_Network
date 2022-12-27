@@ -16,19 +16,20 @@
 
 #include "UDP_pkt.h"
 
+#define DATABASE_PATH "./data/"
 #define TIMEOUT 100
 
-bool sendFile(FILE *fd);
+bool CreateSocket(int PORT);
+
+void SetupClientInfo();
+
+void InitSendPkt();
+
+char *ReceiveCmd();
+bool SendMsg(char *msg);
+bool SendFile(FILE *fd);
 
 void *receive_thread();
 void *timeout_thread();
-
-// Global variables
-extern int sockfd;
-extern struct sockaddr_in info, client_info;
-extern socklen_t len;
-extern UDP_pkt snd_pkt, rcv_pkt;
-
-extern pthread_mutex_t mutex;
 
 #endif

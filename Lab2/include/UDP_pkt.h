@@ -4,7 +4,7 @@
 //==============
 // Packet Header
 //==============
-typedef struct header {
+typedef struct {
     unsigned int seq_num;
     unsigned int ack_num;
     unsigned char isLast;
@@ -13,7 +13,7 @@ typedef struct header {
 //==================
 // UDP packet & data
 //==================
-typedef struct udp_pkt {
+typedef struct {
     HEADER header;
     char data[1024];
 } UDP_pkt;
