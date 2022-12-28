@@ -62,13 +62,12 @@ static bool SendACK(int num) {
     snd_pkt.header.ack_num = num;
     snd_pkt.header.isLast = 0;
 
-    int numbytes;
     // Send Command to server
+    int numbytes;
     if ((numbytes = sendto(sockfd, &snd_pkt, sizeof(snd_pkt), 0, (struct sockaddr *)&info, len)) == -1) {
         perror("sendto error");
         return false;
     }
-    printf("Client: sent %d bytes to %s\n", numbytes, inet_ntoa(info.sin_addr));
 
     return true;
 }
@@ -117,10 +116,10 @@ bool recvFile(char *FileName) {
 
     FILE *fd = fopen(FilePath, "wb");
 
-    printf("Receiving...\n");
-    // char buffer[123431];
-    // int index = 0;
-    // int receive_packet = 0;
+    char buffer[123431];
+    memset(buffer, '\0', sizeof(buffer));
+
+    int Received_Seq_num = -1;
     memset(snd_pkt.data, '\0', sizeof(snd_pkt.data));
 
     while (true) {
@@ -134,20 +133,22 @@ bool recvFile(char *FileName) {
         if (isLoss()) {
             printf("\tOops! Packet loss!\n");
         } else {
-            printf("Client: receive %d bytes from %s\n", numbytes, inet_ntoa(info.sin_addr));
+            printf("\tReceive %4d bytes from %s\n", numbytes, inet_ntoa(info.sin_addr));
+            printf("\t             Sequence number %3d\n", rcv_pkt.header.seq_num);
             SendACK(rcv_pkt.header.seq_num);
-        }
 
-        if (rcv_pkt.header.isLast == true) {
-            break;
+            if (rcv_pkt.header.isLast == true) {
+                break;
+            } else if ((int)rcv_pkt.header.seq_num == Received_Seq_num + 1) {
+                strcat(buffer, rcv_pkt.data);
+                Received_Seq_num++;
+            }
         }
-
-        //==============================================
-        // Write buffer into file if is_last flag is set
-        //==============================================
     }
 
-    fclose(fd);
+    // printf("Receive Data :\n%s\n", buffer);
+    fprintf(fd, "%s", buffer);
 
+    fclose(fd);
     return true;
 }

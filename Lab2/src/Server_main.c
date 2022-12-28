@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
                 // Sleep 1 seconds before transmitting data to make sure the client is ready
                 sleep(1);
-                printf("transmitting...\n");
+                printf("Transmitting...\n");
 
                 // Start to send the file to the client
                 SendFile(fd);

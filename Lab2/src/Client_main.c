@@ -25,10 +25,13 @@ int main() {
             if (CheckFileStatus(FileName)) {
                 time_t t1, t2;
 
+                printf("Receiving...\n");
+
                 t1 = time(NULL);
                 recvFile(FileName);
                 t2 = time(NULL);
 
+                printf("End of receiving.\n");
                 printf("Total cost %ld secs\n", t2 - t1);
             }
         } else {

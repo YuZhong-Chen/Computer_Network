@@ -34,10 +34,10 @@ bool CreateSocket(int PORT) {
         return false;
     }
 
-    printf("====Parameter====\n");
+    printf("=============Parameter=============\n");
     printf("Server's IP is 127.0.0.1\n");
     printf("Server is listening on port %d\n", PORT);
-    printf("==============\n");
+    printf("===================================\n\n");
 
     return true;
 }
@@ -61,6 +61,13 @@ void InitSendPkt() {
 // Ther rest command is stored in the "strtok".
 char *ReceiveCmd() {
     memset(rcv_pkt.data, '\0', sizeof(rcv_pkt.data));
+
+    // Disable socket timeout.
+    struct timeval timeout;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 0;
+    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof(timeout));
+
     while ((recvfrom(sockfd, &rcv_pkt, sizeof(rcv_pkt), 0, (struct sockaddr *)&client_info, (socklen_t *)&len)) != -1) {
         // In client, we set is_last 1 to confirm server get client's first message.
         if (rcv_pkt.header.isLast == 1)
@@ -80,18 +87,23 @@ static bool SendData(char *data) {
         return false;
     }
 
-    printf("server: sent %d bytes to %s\n", SendBytes, inet_ntoa(client_info.sin_addr));
+    printf("\tSend     %4d bytes to   %s\n", SendBytes, inet_ntoa(client_info.sin_addr));
     return true;
 }
 
 static int ReceiveData() {
+    struct timeval timeout;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = TIMEOUT;
+    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof(timeout));
+
     int ReceiveBytes;
     if ((ReceiveBytes = recvfrom(sockfd, &rcv_pkt, sizeof(rcv_pkt), 0, (struct sockaddr *)&info, (socklen_t *)&len)) == -1) {
-        printf("recvfrom error\n");
+        // printf("recvfrom error\n");
         return -1;
     }
 
-    printf("server: receive %d bytes from %s\n", ReceiveBytes, inet_ntoa(info.sin_addr));
+    printf("\tReceive  %4d bytes from %s\n", ReceiveBytes, inet_ntoa(client_info.sin_addr));
     return ReceiveBytes;
 }
 
@@ -115,7 +127,6 @@ bool SendFile(FILE *fd) {
     // }
 
     char Buffer[PACKET_DATA_SIZE];
-    clock_t ExpiredTime;
     char isEndOfFile = false;
 
     while (true) {
@@ -127,29 +138,24 @@ bool SendFile(FILE *fd) {
             if (fread(Buffer, 1, PACKET_DATA_SIZE, fd) != PACKET_DATA_SIZE) {
                 isEndOfFile = true;
             }
-            printf("Send data : \n%s\n", Buffer);
+            // printf("Send data : \n%s\n", Buffer);
         }
 
         SendData(Buffer);
-        ExpiredTime = (clock() * 1000) / CLOCKS_PER_SEC + TIMEOUT;
 
         while (true) {
-            // Checking timeout
-            if ((clock() * 1000) / CLOCKS_PER_SEC > ExpiredTime) {
-                SendData(Buffer);
-                ExpiredTime = (clock() * 1000) / CLOCKS_PER_SEC + TIMEOUT;
-            }
-
             // Receive client ack
             if (ReceiveData() > 0) {
+                printf("\t\t ACK number %3d\n", rcv_pkt.header.ack_num);
                 if (rcv_pkt.header.ack_num == snd_pkt.header.seq_num) {
                     snd_pkt.header.seq_num++;
                     break;
-                } else {
                 }
-            } else {
-                usleep(1);
             }
+
+            // Timeout, send the packet again.
+            printf("\tTimeout! Resend packet\n");
+            SendData(Buffer);
         }
 
         if (isEndOfFile >= 2) {

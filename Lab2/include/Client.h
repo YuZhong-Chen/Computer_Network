@@ -15,7 +15,7 @@
 #include "UDP_pkt.h"
 
 #define LOSS_RATE 0.9
-#define CLIENT_DATABASE_PATH "./output/"
+#define CLIENT_DATABASE_PATH "./ClientData/"
 
 bool CreateSocket();
 
