@@ -23,8 +23,6 @@ bool CreateSocket(int PORT);
 
 void SetupClientInfo();
 
-void InitSendPkt();
-
 char *ReceiveCmd();
 bool SendMsg(char *msg);
 bool SendFile(FILE *fd);

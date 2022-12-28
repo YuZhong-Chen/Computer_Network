@@ -7,12 +7,8 @@ int main() {
 
     SetupServerInfo();
 
-    InitSendPkt();
-
-    printf("Waiting for a commands...\n");
-    getchar();
-
     char Command[50];
+    printf("Waiting for a commands...\n");
     while (fgets(Command, 30, stdin)) {
         if (strncmp(Command, "exit", 4) == 0) {
             break;
@@ -23,16 +19,16 @@ int main() {
             FileName = strtok(NULL, " \n");
 
             if (CheckFileStatus(FileName)) {
-                time_t t1, t2;
+                long long TimeBefore, TimeAfter;
 
                 printf("Receiving...\n");
 
-                t1 = time(NULL);
+                TimeBefore = getCurrentTime();
                 recvFile(FileName);
-                t2 = time(NULL);
+                TimeAfter = getCurrentTime();
 
                 printf("End of receiving.\n");
-                printf("Total cost %ld secs\n", t2 - t1);
+                printf("Total cost %.3lf seconds.\n", (TimeAfter - TimeBefore) / 1000.0);
             }
         } else {
             printf("Illegal command\n");

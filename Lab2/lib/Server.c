@@ -48,17 +48,19 @@ void SetupClientInfo() {
     len = sizeof(client_info);
 }
 
-//============================================
+//=========================================================
 // Initialization sending packet parameter.
-//============================================
-void InitSendPkt() {
+//=========================================================
+static void InitSendPkt() {
     snd_pkt.header.seq_num = 0;
     snd_pkt.header.ack_num = 0;
     snd_pkt.header.isLast = 0;
 }
 
+//=========================================================
 // Return the command.
 // Ther rest command is stored in the "strtok".
+//=========================================================
 char *ReceiveCmd() {
     memset(rcv_pkt.data, '\0', sizeof(rcv_pkt.data));
 
@@ -77,12 +79,14 @@ char *ReceiveCmd() {
     return strtok(rcv_pkt.data, " ");
 }
 
-static bool SendData(char *data) {
-    strcpy(snd_pkt.data, data);
-    snd_pkt.header.isLast = (strlen(data) == 0);  // Set isLast flag for the last part of packet
+static bool SendData(char *Data, int Data_Len, bool isLast) {
+    snd_pkt.header.isLast = isLast;
+    for (int i = 0; i < Data_Len; i++) {
+        snd_pkt.data[i] = Data[i];
+    }
 
     int SendBytes;
-    if ((SendBytes = sendto(sockfd, &snd_pkt, sizeof(snd_pkt), 0, (struct sockaddr *)&client_info, len)) == -1) {
+    if ((SendBytes = sendto(sockfd, &snd_pkt, sizeof(snd_pkt.header) + Data_Len, 0, (struct sockaddr *)&client_info, len)) == -1) {
         perror("sendto error ");
         return false;
     }
@@ -92,6 +96,7 @@ static bool SendData(char *data) {
 }
 
 static int ReceiveData() {
+    // Set the Socket Timeout.
     struct timeval timeout;
     timeout.tv_sec = 0;
     timeout.tv_usec = TIMEOUT;
@@ -109,14 +114,14 @@ static int ReceiveData() {
 
 // Default the client always receives this packet, so don't need to wait for ack.
 bool SendMsg(char *msg) {
-    return SendData(msg);
+    return SendData(msg, strlen(msg), false);
 }
 
 // Send file function, it call receive_thread function at the first time.
 bool SendFile(FILE *fd) {
     fseek(fd, 0, SEEK_END);
-    int FileSize = ftell(fd);
-    printf("File size: %d\n", FileSize);
+    long FileSize = ftell(fd);
+    printf("File size: %ld\n", FileSize);
     rewind(fd);  // Set the position to the beginning of the file.
 
     // // At the first time, we need to create thread.
@@ -125,23 +130,19 @@ bool SendFile(FILE *fd) {
     //     // pthread_create(&th1, NULL, receive_thread, NULL);
     //     // pthread_create(&th2, NULL, timeout_process, NULL);
     // }
-
+    int ReadBytes;
     char Buffer[PACKET_DATA_SIZE];
-    char isEndOfFile = false;
+    bool isEndOfFile = false;
 
-    while (true) {
-        if (isEndOfFile) {
-            memset(Buffer, '\0', sizeof(Buffer));
-            isEndOfFile++;
-        } else {
-            // Send data to client
-            if (fread(Buffer, 1, PACKET_DATA_SIZE, fd) != PACKET_DATA_SIZE) {
-                isEndOfFile = true;
-            }
-            // printf("Send data : \n%s\n", Buffer);
-        }
+    InitSendPkt();
 
-        SendData(Buffer);
+    while (!isEndOfFile) {
+        // Read data from the file descriptor.
+        ReadBytes = fread(Buffer, 1, sizeof(Buffer), fd);
+        isEndOfFile = feof(fd);
+
+        // Send data to client
+        SendData(Buffer, ReadBytes, isEndOfFile);
 
         while (true) {
             // Receive client ack
@@ -155,11 +156,7 @@ bool SendFile(FILE *fd) {
 
             // Timeout, send the packet again.
             printf("\tTimeout! Resend packet\n");
-            SendData(Buffer);
-        }
-
-        if (isEndOfFile >= 2) {
-            break;
+            SendData(Buffer, ReadBytes, isEndOfFile);
         }
     }
 

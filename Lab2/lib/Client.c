@@ -25,10 +25,10 @@ void SetupServerInfo() {
     printf("give me an IP to send: ");
     if (scanf("%s", server_ip)) {
     }
-
     printf("server's's port? ");
     if (scanf("%d", &server_port)) {
     }
+    getchar();
 
     // Just test how to convert the type
     info.sin_addr.s_addr = inet_addr(server_ip);
@@ -37,21 +37,22 @@ void SetupServerInfo() {
     server_port = htons(info.sin_port);
     server_ip = inet_ntoa(info.sin_addr);
     // printf("server %s : %d\n", server_ip, server_port);
+
+    len = sizeof(info);
 }
 
-void InitSendPkt() {
+static void InitSendPkt() {
     memset(snd_pkt.data, '\0', sizeof(snd_pkt.data));
-    len = sizeof(info);
 }
 
 //=====================
 // Simulate packet loss
 //=====================
 static bool isLoss() {
-    if (LOSS_RATE >= 1.0)  // All packets are loss.
+    if (PACKET_LOSS_RATE >= 1.0)  // All packets are loss.
         return true;
     else
-        return (rand() <= (LOSS_RATE * RAND_MAX));
+        return (rand() <= (PACKET_LOSS_RATE * RAND_MAX));
 }
 
 //====================
@@ -64,7 +65,7 @@ static bool SendACK(int num) {
 
     // Send Command to server
     int numbytes;
-    if ((numbytes = sendto(sockfd, &snd_pkt, sizeof(snd_pkt), 0, (struct sockaddr *)&info, len)) == -1) {
+    if ((numbytes = sendto(sockfd, &snd_pkt, sizeof(snd_pkt.header), 0, (struct sockaddr *)&info, len)) == -1) {
         perror("sendto error");
         return false;
     }
@@ -116,16 +117,18 @@ bool recvFile(char *FileName) {
 
     FILE *fd = fopen(FilePath, "wb");
 
-    char buffer[123431];
-    memset(buffer, '\0', sizeof(buffer));
-
+    char Buffer[200000];
+    int ReceiveBytes;
     int Received_Seq_num = -1;
+
+    memset(Buffer, '\0', sizeof(Buffer));
     memset(snd_pkt.data, '\0', sizeof(snd_pkt.data));
 
+    InitSendPkt();
+
     while (true) {
-        int numbytes;
         // Get server response.
-        if ((numbytes = recvfrom(sockfd, &rcv_pkt, sizeof(rcv_pkt), 0, (struct sockaddr *)&info, (socklen_t *)&len)) == -1) {
+        if ((ReceiveBytes = recvfrom(sockfd, &rcv_pkt, sizeof(rcv_pkt), 0, (struct sockaddr *)&info, (socklen_t *)&len)) == -1) {
             printf("recvfrom error\n");
             return false;
         }
@@ -133,22 +136,26 @@ bool recvFile(char *FileName) {
         if (isLoss()) {
             printf("\tOops! Packet loss!\n");
         } else {
-            printf("\tReceive %4d bytes from %s\n", numbytes, inet_ntoa(info.sin_addr));
+            printf("\tReceive %4d bytes from %s\n", ReceiveBytes, inet_ntoa(info.sin_addr));
             printf("\t             Sequence number %3d\n", rcv_pkt.header.seq_num);
             SendACK(rcv_pkt.header.seq_num);
 
+            if ((int)rcv_pkt.header.seq_num == Received_Seq_num + 1) {
+                fwrite(rcv_pkt.data, 1, ReceiveBytes - sizeof(rcv_pkt.header), fd);
+                Received_Seq_num++;
+            }
             if (rcv_pkt.header.isLast == true) {
                 break;
-            } else if ((int)rcv_pkt.header.seq_num == Received_Seq_num + 1) {
-                strcat(buffer, rcv_pkt.data);
-                Received_Seq_num++;
             }
         }
     }
 
-    // printf("Receive Data :\n%s\n", buffer);
-    fprintf(fd, "%s", buffer);
-
     fclose(fd);
     return true;
+}
+
+long long getCurrentTime() {
+    static struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (long long)tv.tv_sec * 1000 + tv.tv_usec / 1000;
 }

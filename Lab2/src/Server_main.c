@@ -14,8 +14,6 @@ int main(int argc, char *argv[]) {
     SetupClientInfo();
 
     while (true) {
-        InitSendPkt();
-
         printf("Server waiting... \n");
         char *Command = ReceiveCmd();
         printf("Process command... \n");
